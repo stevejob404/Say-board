@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>现代留言板</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 配置Tailwind自定义颜色 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#6366F1',
+                        neutral: '#F3F4F6',
+                        dark: '#1F2937'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .animate-fade-in {
+                animation: fadeIn 0.3s ease-in-out;
+            }
+            .animate-slide-up {
+                animation: slideUp 0.3s ease-out;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-inter text-dark min-h-screen flex flex-col">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-primary font-bold text-xl">留言板</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-sm text-gray-500">分享你的想法</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8 transform hover:shadow-lg transition-shadow">
+            <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-800 mb-6">分享你的想法</h1>
+            
+            <!-- 留言表单 -->
+            <form id="commentForm" class="space-y-4">
+                <div class="mb-4">
+                    <label for="comment" class="block text-sm font-medium text-gray-700 mb-1">请输入您的留言：</label>
+                    <textarea 
+                        id="comment" 
+                        name="comment" 
+                        rows="3" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300 resize-none"
+                        placeholder="有什么想分享的..."></textarea>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <span id="charCount" class="text-xs text-gray-500">0/300</span>
+                    <button 
+                        type="submit" 
+                        class="bg-primary hover:bg-secondary text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center gap-2">
+                        <i class="fa fa-paper-plane"></i>
+                        <span>提交留言</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 留言列表 -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">留言列表</h2>
+                <div class="flex gap-2">
+                    <button id="sortBtn" class="text-sm text-primary hover:text-secondary transition-colors flex items-center gap-1">
+                        <i class="fa fa-sort"></i>
+                        <span>排序</span>
+                    </button>
+                    <button id="clearBtn" class="text-sm text-red-500 hover:text-red-600 transition-colors flex items-center gap-1">
+                        <i class="fa fa-trash"></i>
+                        <span>清空</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="comments" class="space-y-4">
+                <!-- 示例留言 -->
+                <div class="comment-item bg-neutral p-4 rounded-lg animate-fade-in">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-2">
+                            <div class="bg-primary/10 p-2 rounded-full">
+                                <i class="fa fa-user text-primary"></i>
+                            </div>
+                            <span class="font-medium">访客</span>
+                        </div>
+                        <span class="text-xs text-gray-500 comment-time">刚刚</span>
+                    </div>
+                    <p class="text-gray-700">这是一个示例留言，你可以在这里分享你的想法和建议。</p>
+                    <div class="mt-3 flex justify-end">
+                        <button class="text-xs text-gray-400 hover:text-red-500 transition-colors delete-btn">
+                            <i class="fa fa-times"></i> 删除
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 空状态 -->
+            <div id="emptyState" class="hidden text-center py-12">
+                <div class="text-gray-300 text-5xl mb-4">
+                    <i class="fa fa-comments-o"></i>
+                </div>
+                <p class="text-gray-500">还没有留言，快来分享你的想法吧！</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center text-sm text-gray-400">
+                <p>© 2025 留言板. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // 检查是否存在示例留言
+        function checkEmptyState() {
+            const commentsDiv = document.getElementById('comments');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (commentsDiv.children.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+            }
+        }
+        
+        // 格式化日期时间
+        function formatDateTime(date) {
+            const now = new Date();
+            const diff = now - date;
+            
+            // 小于1分钟
+            if (diff < 60000) {
+                return '刚刚';
+            }
+            
+            // 小于1小时
+            if (diff < 3600000) {
+                return Math.floor(diff / 60000) + '分钟前';
+            }
+            
+            // 小于1天
+            if (diff < 86400000) {
+                return Math.floor(diff / 3600000) + '小时前';
+            }
+            
+            // 超过1天
+            return date.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+        
+        // 添加新留言
+        function addComment(commentText, isNew = true) {
+            const commentsDiv = document.getElementById('comments');
+            const commentItem = document.createElement('div');
+            commentItem.className = 'comment-item bg-neutral p-4 rounded-lg';
+            
+            // 如果是新添加的留言，添加动画效果
+            if (isNew) {
+                commentItem.classList.add('animate-slide-up');
+            }
+            
+            const now = new Date();
+            const formattedTime = formatDateTime(now);
+            
+            commentItem.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-primary/10 p-2 rounded-full">
+                            <i class="fa fa-user text-primary"></i>
+                        </div>
+                        <span class="font-medium">访客</span>
+                    </div>
+                    <span class="text-xs text-gray-500 comment-time">${formattedTime}</span>
+                </div>
+                <p class="text-gray-700">${commentText}</p>
+                <div class="mt-3 flex justify-end">
+                    <button class="text-xs text-gray-400 hover:text-red-500 transition-colors delete-btn">
+                        <i class="fa fa-times"></i> 删除
+                    </button>
+                </div>
+            `;
+            
+            // 将新留言添加到顶部
+            commentsDiv.insertBefore(commentItem, commentsDiv.firstChild);
+            
+            // 为删除按钮添加事件监听
+            commentItem.querySelector('.delete-btn').addEventListener('click', function() {
+                commentItem.classList.add('opacity-0', 'transform', 'translate-y-2');
+                commentItem.style.transition = 'opacity 0.3s, transform 0.3s';
+                
+                setTimeout(() => {
+                    commentItem.remove();
+                    checkEmptyState();
+                }, 300);
+            });
+            
+            // 保存到本地存储
+            saveComments();
+            
+            // 检查空状态
+            checkEmptyState();
+        }
+        
+        // 保存留言到本地存储
+        function saveComments() {
+            const comments = [];
+            document.querySelectorAll('.comment-item').forEach(item => {
+                const text = item.querySelector('p').textContent;
+                const time = item.querySelector('.comment-time').textContent;
+                comments.push({ text, time });
+            });
+            
+            localStorage.setItem('comments', JSON.stringify(comments));
+        }
+        
+        // 从本地存储加载留言
+        function loadComments() {
+            const comments = JSON.parse(localStorage.getItem('comments')) || [];
+            
+            // 先清空现有留言（除了示例留言）
+            const commentsDiv = document.getElementById('comments');
+            const exampleComment = commentsDiv.querySelector('.comment-item');
+            commentsDiv.innerHTML = '';
+            
+            // 如果有示例留言，先添加回去
+            if (exampleComment) {
+                commentsDiv.appendChild(exampleComment);
+            }
+            
+            // 添加存储的留言
+            comments.forEach(comment => {
+                const commentItem = document.createElement('div');
+                commentItem.className = 'comment-item bg-neutral p-4 rounded-lg animate-fade-in';
+                
+                commentItem.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-2">
+                            <div class="bg-primary/10 p-2 rounded-full">
+                                <i class="fa fa-user text-primary"></i>
+                            </div>
+                            <span class="font-medium">访客</span>
+                        </div>
+                        <span class="text-xs text-gray-500 comment-time">${comment.time}</span>
+                    </div>
+                    <p class="text-gray-700">${comment.text}</p>
+                    <div class="mt-3 flex justify-end">
+                        <button class="text-xs text-gray-400 hover:text-red-500 transition-colors delete-btn">
+                            <i class="fa fa-times"></i> 删除
+                        </button>
+                    </div>
+                `;
+                
+                commentsDiv.appendChild(commentItem);
+                
+                // 为删除按钮添加事件监听
+                commentItem.querySelector('.delete-btn').addEventListener('click', function() {
+                    commentItem.classList.add('opacity-0', 'transform', 'translate-y-2');
+                    commentItem.style.transition = 'opacity 0.3s, transform 0.3s';
+                    
+                    setTimeout(() => {
+                        commentItem.remove();
+                        checkEmptyState();
+                        saveComments();
+                    }, 300);
+                });
+            });
+            
+            // 检查空状态
+            checkEmptyState();
+        }
+        
+        // 字符计数
+        function updateCharCount() {
+            const commentInput = document.getElementById('comment');
+            const charCount = document.getElementById('charCount');
+            const count = commentInput.value.length;
+            
+            charCount.textContent = `${count}/300`;
+            
+            // 接近最大长度时改变颜色
+            if (count > 250) {
+                charCount.classList.add('text-amber-500');
+                if (count > 300) {
+                    charCount.classList.add('text-red-500');
+                } else {
+                    charCount.classList.remove('text-red-500');
+                }
+            } else {
+                charCount.classList.remove('text-amber-500', 'text-red-500');
+            }
+        }
+        
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 加载本地存储的留言
+            loadComments();
+            
+            // 获取留言表单并添加提交事件监听
+            const commentForm = document.getElementById('commentForm');
+            commentForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // 获取用户输入的留言内容
+                const commentInput = document.getElementById('comment');
+                const commentText = commentInput.value.trim();
+                
+                // 验证输入
+                if (!commentText) {
+                    alert('请输入留言内容！');
+                    return;
+                }
+                
+                if (commentText.length > 300) {
+                    alert('留言内容不能超过300个字符！');
+                    return;
+                }
+                
+                // 添加新留言
+                addComment(commentText);
+                
+                // 清空输入框
+                commentInput.value = '';
+                updateCharCount();
+                
+                // 聚焦到输入框
+                commentInput.focus();
+            });
+            
+            // 字符计数
+            const commentInput = document.getElementById('comment');
+            commentInput.addEventListener('input', updateCharCount);
+            updateCharCount(); // 初始化
+            
+            // 排序按钮
+            const sortBtn = document.getElementById('sortBtn');
+            sortBtn.addEventListener('click', function() {
+                const commentsDiv = document.getElementById('comments');
+                const commentItems = Array.from(commentsDiv.querySelectorAll('.comment-item'));
+                
+                // 切换排序方向
+                if (sortBtn.dataset.sortDirection === 'asc') {
+                    // 降序排列（最新的在最前）
+                    commentItems.reverse().forEach(item => commentsDiv.appendChild(item));
+                    sortBtn.innerHTML = '<i class="fa fa-sort-amount-desc"></i><span>最新</span>';
+                    sortBtn.dataset.sortDirection = 'desc';
+                } else {
+                    // 升序排列（最旧的在最前）
+                    commentItems.reverse().forEach(item => commentsDiv.appendChild(item));
+                    sortBtn.innerHTML = '<i class="fa fa-sort-amount-asc"></i><span>最早</span>';
+                    sortBtn.dataset.sortDirection = 'asc';
+                }
+                
+                // 保存排序后的结果
+                saveComments();
+            });
+            
+            // 默认设置为最新排序
+            sortBtn.innerHTML = '<i class="fa fa-sort-amount-desc"></i><span>最新</span>';
+            sortBtn.dataset.sortDirection = 'desc';
+            
+            // 清空按钮
+            const clearBtn = document.getElementById('clearBtn');
+            clearBtn.addEventListener('click', function() {
+                if (confirm('确定要清空所有留言吗？此操作不可恢复。')) {
+                    const commentsDiv = document.getElementById('comments');
+                    const exampleComment = commentsDiv.querySelector('.comment-item');
+                    commentsDiv.innerHTML = '';
+                    
+                    // 如果有示例留言，添加回去
+                    if (exampleComment) {
+                        commentsDiv.appendChild(exampleComment);
+                    }
+                    
+                    // 清除本地存储
+                    localStorage.removeItem('comments');
+                    
+                    // 检查空状态
+                    checkEmptyState();
+                }
+            });
+            
+            // 自动调整文本域高度
+            commentInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        });
+    </script>
+</body>
+</html>
